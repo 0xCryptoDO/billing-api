@@ -1,0 +1,65 @@
+cache:
+  paths:
+    - node_modules/
+    - .yarn
+
+before_script:
+  - apt-get update -qq && apt-get install
+
+stages:
+  - deploy
+
+deploy-staging:
+    stage: deploy
+    environment:
+      name: staging
+      url: https://billing-api.staging.cryptodo.app
+    variables:
+      DOCKER_TLS_CERTDIR: "/certs"
+    image: kroniak/ssh-client:latest
+    services:
+      - kroniak/ssh-client:latest
+    script:
+      - mkdir -p ~/.ssh
+      - chmod 700 ~/.ssh
+      - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+      - echo "$SSH_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa 
+      - sed -i "s/__DB_USERNAME__/$DB_USERNAME/" docker-compose.staging.yml
+      - sed -i "s/__DB_PASSWORD__/$DB_PASSWORD/" docker-compose.staging.yml
+      - sed -i "s/__DB_HOST__/$DB_HOST/" docker-compose.staging.yml
+      - sed -i "s/__DB_PORT__/$DB_PORT/" docker-compose.staging.yml
+      - sed -i "s/__JWT_SECRET__/$JWT_SECRET/" docker-compose.staging.yml
+      - ssh $STAGING_SSH_HOST 'sudo rm -r ~/cryptodo/staging/billing-api'
+      - scp -r "$PWD" $STAGING_SSH_HOST:~/cryptodo/staging
+      - ssh $STAGING_SSH_HOST 'cd ~/cryptodo/staging/billing-api && sudo docker-compose --file docker-compose.staging.yml up --force-recreate --build -d'
+    only:
+      - staging
+
+deploy-production:
+  stage: deploy
+  environment:
+    name: production
+    url: https://billing-api.cryptodo.app
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  image: kroniak/ssh-client:latest
+  services:
+    - kroniak/ssh-client:latest
+  script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - echo "$SSH_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa 
+    - sed -i "s/__DB_USERNAME__/$DB_USERNAME/" docker-compose.production.yml
+    - sed -i "s/__DB_PASSWORD__/$DB_PASSWORD/" docker-compose.production.yml
+    - sed -i "s/__DB_HOST__/$DB_HOST/" docker-compose.production.yml
+    - sed -i "s/__DB_PORT__/$DB_PORT/" docker-compose.production.yml
+    - sed -i "s/__JWT_SECRET__/$JWT_SECRET/" docker-compose.production.yml
+    - ssh $PRODUCTION_SSH_HOST 'sudo rm -r ~/cryptodo/production/billing-api'
+    - scp -r "$PWD" $PRODUCTION_SSH_HOST:~/cryptodo/production
+    - ssh $PRODUCTION_SSH_HOST 'cd ~/cryptodo/production/billing-api && sudo docker-compose --file docker-compose.production.yml up --force-recreate --build -d'
+  only:
+    - main
+

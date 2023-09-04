@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  billing-api-staging:
+    restart: always
+    build: .
+    ports:
+    - 3402:3002
+    environment:
+      NODE_ENV: development
+      DB_USERNAME: __DB_USERNAME__
+      DB_PASSWORD: __DB_PASSWORD__
+      DB_HOST: __DB_HOST__
+      DB_PORT: __DB_PORT__
+      JWT_SECRET: __JWT_SECRET__
