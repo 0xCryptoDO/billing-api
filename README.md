@@ -30,12 +30,14 @@
 
 First, add .env 
 Example:
+```
 NODE_ENV=development
-DB_USERNAME=username
-DB_PASSWORD=password
-DB_HOST=mongodb.project.app
-DB_PORT=3300
-JWT_SECRET=secret
+DB_USERNAME=<username>
+DB_PASSWORD=<password>
+DB_HOST=<db_host>
+DB_PORT=<db_port>
+JWT_SECRET=<secret>
+```
 
 ```bash
 $ npm install
